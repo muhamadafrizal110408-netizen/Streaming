@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#14162B">
+<title>Sinema Saku</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="toast-container" class="toast-container"></div>
+
+<!-- ===== LAYAR AUTH ===== -->
+<section id="auth-screen" class="auth-screen">
+  <button id="theme-toggle" class="theme-toggle" title="Ganti tema" aria-label="Ganti tema terang/gelap">◐</button>
+  <div class="auth-card">
+    <p class="auth-eyebrow">Sinema Saku</p>
+    <h1 class="auth-title">Koleksi film & video pribadimu, satu tautan sekaligus.</h1>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login">Masuk</button>
+      <button class="auth-tab" data-tab="register">Daftar</button>
+      <button class="auth-tab" data-tab="forgot">Lupa sandi</button>
+    </div>
+
+    <form id="login-form" class="auth-form">
+      <label>Username
+        <input type="text" id="login-username" autocomplete="username" required>
+      </label>
+      <label>Kata sandi
+        <input type="password" id="login-password" autocomplete="current-password" required>
+      </label>
+      <p class="auth-error" id="login-error"></p>
+      <button type="submit" class="btn btn-primary">Masuk</button>
+    </form>
+
+    <form id="register-form" class="auth-form hidden">
+      <label>Username
+        <input type="text" id="register-username" autocomplete="username" required>
+      </label>
+      <label>Kata sandi
+        <input type="password" id="register-password" autocomplete="new-password" required>
+      </label>
+      <label>Pilih avatar
+        <div id="avatar-picker" class="avatar-picker"></div>
+      </label>
+      <label>Pertanyaan keamanan (buat reset sandi nanti)
+        <input type="text" id="register-secq" placeholder="Contoh: nama hewan peliharaan pertama?" required>
+      </label>
+      <label>Jawaban keamanan
+        <input type="text" id="register-seca" required>
+      </label>
+      <p class="auth-error" id="register-error"></p>
+      <button type="submit" class="btn btn-primary">Buat akun</button>
+    </form>
+
+    <form id="forgot-form" class="auth-form hidden">
+      <label>Username
+        <input type="text" id="forgot-username" required>
+      </label>
+      <button type="button" id="forgot-load-q" class="btn btn-ghost">Tampilkan pertanyaan</button>
+      <p id="forgot-question" class="forgot-question"></p>
+      <label id="forgot-answer-wrap" class="hidden">Jawaban keamanan
+        <input type="text" id="forgot-answer">
+      </label>
+      <label id="forgot-newpass-wrap" class="hidden">Sandi baru
+        <input type="password" id="forgot-newpass">
+      </label>
+      <p class="auth-error" id="forgot-error"></p>
+      <button type="submit" id="forgot-submit" class="btn btn-primary hidden">Atur sandi baru</button>
+    </form>
+
+  </div>
+</section>
+
+<!-- ===== APLIKASI UTAMA ===== -->
+<div id="app" class="app hidden">
+  <header class="topbar">
+    <span class="brand">Sinema Saku</span>
+    <input type="search" id="search-input" class="search" placeholder="Cari judul...">
+    <div class="topbar-actions">
+      <button id="theme-toggle-app" class="icon-btn" title="Ganti tema" aria-label="Ganti tema terang/gelap">◐</button>
+      <button id="account-btn" class="icon-btn" title="Akun saya"><span id="account-avatar">🙂</span></button>
+      <button id="dev-panel-btn" class="btn btn-ghost hidden">Panel Dev</button>
+      <button id="logout-btn" class="btn btn-ghost">Keluar</button>
+    </div>
+  </header>
+
+  <div class="filter-bar">
+    <select id="category-filter" class="filter-select">
+      <option value="">Semua kategori</option>
+    </select>
+    <select id="sort-select" class="filter-select">
+      <option value="newest">Terbaru</option>
+      <option value="az">Judul A-Z</option>
+      <option value="popular">Paling ditonton</option>
+      <option value="rating">Rating tertinggi</option>
+    </select>
+    <div id="tag-filters" class="tag-filters"></div>
+  </div>
+
+  <main class="content">
+    <section id="empty-state" class="empty-state hidden">
+      <p class="empty-title">Belum ada video.</p>
+      <p class="empty-body">Minta akun dev untuk menambahkan tautan video pertama lewat Panel Dev.</p>
+    </section>
+
+    <div id="video-grid" class="video-grid"></div>
+  </main>
+</div>
+
+<!-- ===== MODAL AKUN SAYA ===== -->
+<div id="account-modal" class="modal hidden">
+  <div class="modal-backdrop" data-close="account"></div>
+  <div class="modal-panel">
+    <button class="modal-close" data-close="account">Tutup</button>
+    <h2 class="panel-title">Akun Saya</h2>
+
+    <div id="avatar-picker-account" class="avatar-picker"></div>
+
+    <h3 class="dev-subtitle">Statistik</h3>
+    <p id="account-stats" class="account-stats"></p>
+
+    <hr class="dev-divider">
+    <h3 class="dev-subtitle">Ganti username</h3>
+    <form id="change-username-form" class="dev-form">
+      <label>Username baru
+        <input type="text" id="new-username" required>
+      </label>
+      <button type="submit" class="btn btn-secondary">Simpan</button>
+    </form>
+
+    <hr class="dev-divider">
+    <h3 class="dev-subtitle">Ganti sandi</h3>
+    <form id="change-mypass-form" class="dev-form">
+      <label>Sandi baru
+        <input type="password" id="new-mypass" required>
+      </label>
+      <button type="submit" class="btn btn-secondary">Simpan</button>
+    </form>
+
+    <hr class="dev-divider">
+    <h3 class="dev-subtitle">Watchlist</h3>
+    <ul id="watchlist-list" class="dev-video-list"></ul>
+
+    <h3 class="dev-subtitle">Favorit</h3>
+    <ul id="favorites-list" class="dev-video-list"></ul>
+
+    <h3 class="dev-subtitle">Riwayat tontonan</h3>
+    <ul id="history-list" class="dev-video-list"></ul>
+  </div>
+</div>
+
+<!-- ===== MODAL PEMUTAR ===== -->
+<div id="player-modal" class="modal hidden">
+  <div class="modal-backdrop" data-close="player"></div>
+  <div class="modal-panel player-panel">
+    <button class="modal-close" data-close="player">Tutup</button>
+    <div id="player-embed" class="player-embed"></div>
+
+    <div class="player-toolbar">
+      <button id="player-favorite" class="icon-btn" title="Favorit">♡</button>
+      <button id="player-watchlist" class="icon-btn" title="Tonton nanti">➕</button>
+      <div id="player-rating" class="rating-stars"></div>
+      <select id="player-altlinks" class="filter-select hidden"></select>
+      <button id="player-trailer" class="btn btn-ghost hidden">Lihat trailer</button>
+    </div>
+
+    <h2 id="player-title" class="player-title"></h2>
+    <p id="player-meta" class="player-meta"></p>
+    <p id="player-desc" class="player-desc"></p>
+
+    <div id="similar-videos" class="similar-section"></div>
+
+    <hr class="dev-divider">
+    <h3 class="dev-subtitle">Komentar <span class="hint-inline">(tersimpan di browser ini saja)</span></h3>
+    <form id="comment-form" class="dev-form">
+      <textarea id="comment-input" rows="2" placeholder="Tulis komentar..."></textarea>
+      <button type="submit" class="btn btn-secondary">Kirim</button>
+    </form>
+    <ul id="comment-list" class="comment-list"></ul>
+  </div>
+</div>
+
+<!-- ===== MODAL TRAILER ===== -->
+<div id="trailer-modal" class="modal hidden">
+  <div class="modal-backdrop" data-close="trailer"></div>
+  <div class="modal-panel player-panel">
+    <button class="modal-close" data-close="trailer">Tutup</button>
+    <div id="trailer-embed" class="player-embed"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL PANEL DEV ===== -->
+<div id="dev-modal" class="modal hidden">
+  <div class="modal-backdrop" data-close="dev"></div>
+  <div class="modal-panel dev-panel">
+    <button class="modal-close" data-close="dev">Tutup</button>
+    <h2 class="panel-title">Panel Dev</h2>
+
+    <div class="dev-tabs">
+      <button class="dev-tab active" data-devtab="tambah">Tambah</button>
+      <button class="dev-tab" data-devtab="kelola">Kelola</button>
+      <button class="dev-tab" data-devtab="akun" id="dev-tab-akun-btn">Akun</button>
+      <button class="dev-tab" data-devtab="statistik">Statistik</button>
+      <button class="dev-tab" data-devtab="data" id="dev-tab-data-btn">Data</button>
+    </div>
+
+    <div id="devtab-tambah" class="devtab-panel">
+      <form id="add-video-form" class="dev-form">
+        <input type="hidden" id="edit-video-id">
+        <label>Judul
+          <input type="text" id="video-title" required>
+        </label>
+        <label>Deskripsi
+          <textarea id="video-desc" rows="2"></textarea>
+        </label>
+        <label>Tautan video (YouTube, Vimeo, atau tautan file .mp4 langsung)
+          <input type="url" id="video-url" placeholder="https://..." required>
+        </label>
+        <label>Tautan trailer (opsional)
+          <input type="url" id="video-trailer" placeholder="https://...">
+        </label>
+        <label>Tautan gambar sampul (opsional)
+          <input type="url" id="video-thumb" placeholder="https://...">
+        </label>
+        <label>Kategori
+          <input type="text" id="video-category" placeholder="Film, Series, Tutorial, ...">
+        </label>
+        <label>Tag (pisahkan pakai koma)
+          <input type="text" id="video-tags" placeholder="komedi, 2024, favorit">
+        </label>
+        <label>Durasi
+          <input type="text" id="video-duration" placeholder="mis. 1j 42m">
+        </label>
+        <label>Season / Episode (opsional, buat series)
+          <input type="text" id="video-episode" placeholder="mis. S1E3">
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="video-featured"> Tandai sebagai "Pilihan Dev"
+        </label>
+
+        <div id="video-preview-wrap" class="video-preview-wrap hidden">
+          <p class="hint-inline">Pratinjau:</p>
+          <div id="video-preview" class="player-embed"></div>
+        </div>
+
+        <button type="submit" id="add-video-submit" class="btn btn-primary">Tambahkan video</button>
+        <button type="button" id="cancel-edit" class="btn btn-ghost hidden">Batal edit</button>
+      </form>
+    </div>
+
+    <div id="devtab-kelola" class="devtab-panel hidden">
+      <ul id="dev-video-list" class="dev-video-list"></ul>
+    </div>
+
+    <div id="devtab-akun" class="devtab-panel hidden">
+      <ul id="dev-account-list" class="dev-video-list"></ul>
+      <hr class="dev-divider">
+      <h3 class="dev-subtitle">Ganti sandi dev (akun ini)</h3>
+      <form id="change-pass-form" class="dev-form">
+        <label>Sandi baru
+          <input type="password" id="new-dev-pass" required>
+        </label>
+        <button type="submit" class="btn btn-secondary">Simpan sandi</button>
+      </form>
+    </div>
+
+    <div id="devtab-statistik" class="devtab-panel hidden">
+      <p id="dev-stats" class="account-stats"></p>
+    </div>
+
+    <div id="devtab-data" class="devtab-panel hidden">
+      <p class="hint-inline">Backup / pulihkan seluruh data (akun, video, komentar) sebagai file JSON.</p>
+      <button id="export-data-btn" class="btn btn-secondary">Ekspor data (.json)</button>
+      <label class="import-label">Impor data (.json)
+        <input type="file" id="import-data-input" accept="application/json">
+      </label>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
